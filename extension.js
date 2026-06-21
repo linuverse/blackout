@@ -17,9 +17,7 @@ function getPowerProfile() {
 export default class BlackScreenExtension {
   
 	enable() {
-		this._enabled = true;
     	this._idleMonitor = global.backend.get_core_idle_monitor();
-    	this._actor = null;
     	this._idleWatch = 0;
     	this._activeWatch = 0;
 		this._actors = []
@@ -28,8 +26,6 @@ export default class BlackScreenExtension {
   	}
   
   	disable() {      
-		this._enabled = false;
-
     	if (this._idleWatch) {
       		this._idleMonitor.remove_watch(this._idleWatch);
       		this._idleWatch = 0;
@@ -45,7 +41,6 @@ export default class BlackScreenExtension {
 
   	_installIdleWatch() {      
     	this._idleWatch = this._idleMonitor.add_idle_watch(1000 * 60 * 10, () => {
-	    	if (!this._enabled) return;
       		this._showScreen();
     	});      
   	}
@@ -73,7 +68,6 @@ export default class BlackScreenExtension {
 		}
 
 		this._activeWatch = this._idleMonitor.add_user_active_watch(() => {
-			if (!this._enabled) return;
       		this._hideScreen();
       		this._activeWatch = 0;
       		this._installIdleWatch();
