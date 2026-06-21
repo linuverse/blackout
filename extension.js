@@ -16,86 +16,85 @@ function getPowerProfile() {
 
 export default class BlackScreenExtension {
   
-  enable() {
-	  this._enabled = true;
-    this._idleMonitor = global.backend.get_core_idle_monitor();
-    this._actor = null;
-    this._idleWatch = 0;
-    this._activeWatch = 0;
-	  this._actors = []
-    this._installIdleWatch();
-    this._previousProfile = getPowerProfile();
-  }
+	enable() {
+		this._enabled = true;
+    	this._idleMonitor = global.backend.get_core_idle_monitor();
+    	this._actor = null;
+    	this._idleWatch = 0;
+    	this._activeWatch = 0;
+		this._actors = []
+    	this._installIdleWatch();
+    	this._previousProfile = getPowerProfile();
+  	}
   
-  disable() {      
-	  this._enabled = false;
+  	disable() {      
+		this._enabled = false;
 
-    if (this._idleWatch) {
-      this._idleMonitor.remove_watch(this._idleWatch);
-      this._idleWatch = 0;
-    }
+    	if (this._idleWatch) {
+      		this._idleMonitor.remove_watch(this._idleWatch);
+      		this._idleWatch = 0;
+    	}
 
-    if (this._activeWatch) {
-      this._idleMonitor.remove_watch(this._activeWatch);
-      this._activeWatch = 0;
-    }
+    	if (this._activeWatch) {
+      		this._idleMonitor.remove_watch(this._activeWatch);
+      		this._activeWatch = 0;
+    	}
 
-    this._hideScreen();
-  }
+    	this._hideScreen();
+  	}
 
-  _installIdleWatch() {      
-    this._idleWatch = this._idleMonitor.add_idle_watch(1000 * 60 * 10, () => {
-	    if (!this._enabled) return;
-      this._showScreen();
-    });      
-  }
+  	_installIdleWatch() {      
+    	this._idleWatch = this._idleMonitor.add_idle_watch(1000 * 60 * 10, () => {
+	    	if (!this._enabled) return;
+      		this._showScreen();
+    	});      
+  	}
+	
+	_showScreen() {
+		global.display.set_cursor(Meta.Cursor.NONE);
 
-  _showScreen() {
-	  global.display.set_cursor(Meta.Cursor.NONE);
+	  	const count = global.display.get_n_monitors();
 
-	  const count = global.display.get_n_monitors();
+	  	for (let i = 0; i < count; i++) {
 
-	  for (let i = 0; i < count; i++) {
-
-	    const m = global.display.get_monitor_geometry(i);
+	    	const m = global.display.get_monitor_geometry(i);
       
-      const actor = new St.Widget({
-	      style: 'background-color: #000000;'
-	    });
+      		const actor = new St.Widget({
+	      		style: 'background-color: #000000;'
+	    	});
 
-	    actor.reactive = true;
-	    actor.set_position(m.x, m.y);
-	    actor.set_size(m.width, m.height);
+	    	actor.reactive = true;
+	    	actor.set_position(m.x, m.y);
+	    	actor.set_size(m.width, m.height);
 
-	    Main.layoutManager.addTopChrome(actor);
+	    	Main.layoutManager.addTopChrome(actor);
 
-	    this._actors.push(actor);
-	  }
+			this._actors.push(actor);
+		}
 
-    this._activeWatch = this._idleMonitor.add_user_active_watch(() => {
-	    if (!this._enabled) return;
-      this._hideScreen();
-      this._activeWatch = 0;
-      this._installIdleWatch();
-    });
+		this._activeWatch = this._idleMonitor.add_user_active_watch(() => {
+			if (!this._enabled) return;
+      		this._hideScreen();
+      		this._activeWatch = 0;
+      		this._installIdleWatch();
+    	});
         
-    Gio.Subprocess.new(
-      ['powerprofilesctl', 'set', 'power-saver'],
-      Gio.SubprocessFlags.NONE
-    );        
-  }
+    	Gio.Subprocess.new(
+      		['powerprofilesctl', 'set', 'power-saver'],
+      		Gio.SubprocessFlags.NONE
+    	);        
+  	}
 
-  _hideScreen() {
-    for (const actor of this._actors) actor.destroy();
+  	_hideScreen() {
+    	for (const actor of this._actors) actor.destroy();
 
-	  this._actors = [];
+	  	this._actors = [];
 
-	  global.display.set_cursor(Meta.Cursor.DEFAULT);
+	  	global.display.set_cursor(Meta.Cursor.DEFAULT);
 	    
-	  Gio.Subprocess.new(
-      ['powerprofilesctl', 'set', this._previousProfile],
-      Gio.SubprocessFlags.NONE
-    );        
-  }
-
+	  	Gio.Subprocess.new(
+      		['powerprofilesctl', 'set', this._previousProfile],
+      		Gio.SubprocessFlags.NONE
+    	);        
+  	}
 }
