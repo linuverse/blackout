@@ -35,7 +35,7 @@ export default class BlackoutExtension {
         }
 
         if (this._tracker) {
-            this._hasVisibilityInhibited && !this._tracker.get_pointer_visible())
+            if (this._hasVisibilityInhibited && !this._tracker.get_pointer_visible())
                 this._tracker.uninhibit_cursor_visibility();
             this._tracker = null;
             this._hasVisibilityInhibited = null;
