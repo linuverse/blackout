@@ -2,7 +2,11 @@
   "uuid": "blackout@groovy-gorilla.github.io",
   "name": "Blackout",
   "description": "A lightweight GNOME Shell extension that displays a black screen after a period of user inactivity and automatically enables power saving mode.",
-  "shell-version": ["48"],
+  "shell-version": [
+    "48",
+    "49",
+    "50"
+  ],
   "url": "https://github.com/groovy-gorilla/blackout",
-  "version": 1
+  "version": 3
 }
