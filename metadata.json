@@ -8,5 +8,6 @@
     "50"
   ],
   "url": "https://github.com/groovy-gorilla/blackout",
-  "version": 3
+  "version": 4
+  "settings-schema": "org.gnome.shell.extensions.blackout"
 }
