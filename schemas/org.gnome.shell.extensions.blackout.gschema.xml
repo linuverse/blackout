@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.blackout"
+          path="/org/gnome/shell/extensions/blackout/">
+
+    <key name="idle-minutes" type="i">
+      <default>10</default>
+      <summary>Idle time in minutes</summary>
+    </key>
+
+  </schema>
+</schemalist>
