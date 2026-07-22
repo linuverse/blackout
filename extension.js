@@ -4,7 +4,7 @@ import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Clutter from 'gi://Clutter';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import { extension } from 'resource:///org/gnome/shell/extensions/extension.js';
+import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 
 export default class BlackoutExtension extends Extension {
 
@@ -15,18 +15,20 @@ export default class BlackoutExtension extends Extension {
         this._activeWatch = 0;
 
         this._actors = [];
-        this._previousProfile = null;
 
         this._settings = this.getSettings();
         this._settingsChangedId = this._settings.connect(
             'changed::idle-minutes',
-            () => this._onIdleMinutesChanged()
+            () => {
+                this._onIdleMinutesChanged();
+            }
         );
-
+        
         this._installIdleWatch();
 
         // GNOME 50
         this._tracker = global.backend.get_cursor_tracker?.();
+        
     }
 
     disable() {
@@ -46,7 +48,7 @@ export default class BlackoutExtension extends Extension {
             this._tracker = null;
             this._hasVisibilityInhibited = null;
         }
-
+        
         if (this._settingsChangedId) {
             this._settings.disconnect(this._settingsChangedId);
             this._settingsChangedId = 0;
@@ -54,9 +56,8 @@ export default class BlackoutExtension extends Extension {
 
         this._hideScreen();
 
-        this._powerProxy = null;
     }
-
+    
     _onIdleMinutesChanged() {
         if (this._idleWatch) {
             this._idleMonitor.remove_watch(this._idleWatch);
@@ -66,66 +67,10 @@ export default class BlackoutExtension extends Extension {
         this._installIdleWatch();
     }
 
-    getPowerProxy() {
-        if (this._powerProxy)
-            return this._powerProxy;
-
-        this._powerProxy = Gio.DBusProxy.new_for_bus_sync(
-            Gio.BusType.SYSTEM,
-            Gio.DBusProxyFlags.NONE,
-            null,
-            'net.hadess.PowerProfiles',
-            '/net/hadess/PowerProfiles',
-            'org.freedesktop.DBus.Properties',
-            null
-        );
-
-        return this._powerProxy;
-    }
-
-    getPowerProfile() {
-        const proxy = this.getPowerProxy();
-        
-        const result = proxy.call_sync(
-            'Get',
-            new GLib.Variant(
-                '(ss)',
-                [
-                    'net.hadess.PowerProfiles',
-                    'ActiveProfile',
-                ]
-            ),
-            Gio.DBusCallFlags.NONE,
-            -1,
-            null
-        );
-
-        return result.deepUnpack()[0].deepUnpack();
-    }
-
-    setPowerProfile(profile) {
-        const proxy = this.getPowerProxy();
-        
-        proxy.call_sync(
-            'Set',
-            new GLib.Variant(
-                '(ssv)',
-                [
-                    'net.hadess.PowerProfiles',
-                    'ActiveProfile',
-                    new GLib.Variant('s', profile),
-                ]
-            ),
-            Gio.DBusCallFlags.NONE,
-            -1,
-            null
-        );
-    }
-
-    _installIdleWatch() {
+    _installIdleWatch() {     
         const minutes = this._settings.get_int('idle-minutes');
         const timeout = minutes * 60 * 1000;
-        
+    
         this._idleWatch = this._idleMonitor.add_idle_watch(
             timeout,
             () => {
@@ -138,8 +83,6 @@ export default class BlackoutExtension extends Extension {
     _showScreen() {
         if (this._actors.length > 0)
             return;
-
-        this._previousProfile = this.getPowerProfile();
 
         // GNOME 48, 49
         if (Meta.Cursor) {
@@ -190,7 +133,6 @@ export default class BlackoutExtension extends Extension {
             this._installIdleWatch();
         });
 
-        this.setPowerProfile('power-saver');
     }
 
     _hideScreen() {
@@ -213,14 +155,12 @@ export default class BlackoutExtension extends Extension {
 
         // GNOME 50
         else if (global.backend.get_cursor_tracker) {
-            if (!this._hasVisibilityInhibited) {
+            if (this._hasVisibilityInhibited) {
                 this._tracker.uninhibit_cursor_visibility();
                 this._hasVisibilityInhibited = false; 
-            }          
+            }
+                       
         }
 
-        if (this._previousProfile) {
-            this.setPowerProfile(this._previousProfile);
-        }
     }
 }
